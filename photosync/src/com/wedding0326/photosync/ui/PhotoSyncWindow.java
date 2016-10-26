@@ -8,6 +8,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -16,21 +17,28 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 
@@ -49,13 +57,15 @@ import com.wedding0326.photosync.ui.provider.ResultViewLabelProvider;
  */
 public class PhotoSyncWindow extends ApplicationWindow {
 
-    private Composite previewComp;
-
     private Set<String> pathList;
 
     private TreeViewer treeViewer;
 
     private ListViewer listViewer;
+
+    private Canvas previewCanvas;
+
+    private Image previewImage;
 
     /**
      * Create the application window.
@@ -66,6 +76,9 @@ public class PhotoSyncWindow extends ApplicationWindow {
         addToolBar(SWT.FLAT | SWT.WRAP);
         addMenuBar();
         addStatusLine();
+
+        pathList = new HashSet<>();
+        pathList.add("D:\\yyi.talendbj.esb\\dev\\comparetest");
     }
 
     /**
@@ -162,13 +175,35 @@ public class PhotoSyncWindow extends ApplicationWindow {
         grpPreview.setLayout(new GridLayout(1, false));
         grpPreview.setText("Preview");
 
-        previewComp = new Composite(grpPreview, SWT.BORDER);
+        Composite previewComp = new Composite(grpPreview, SWT.BORDER);
         previewComp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
-        previewComp.setLayout(new GridLayout(1, false));
+        GridLayout gl_previewComp = new GridLayout(1, false);
+        gl_previewComp.verticalSpacing = 0;
+        gl_previewComp.marginWidth = 0;
+        gl_previewComp.horizontalSpacing = 0;
+        gl_previewComp.marginHeight = 0;
+        previewComp.setLayout(gl_previewComp);
+
+        previewCanvas = new Canvas(previewComp, SWT.NONE);
+        previewCanvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridLayout gl_previewCanvas = new GridLayout(1, false);
+        gl_previewCanvas.marginHeight = 0;
+        gl_previewCanvas.verticalSpacing = 0;
+        gl_previewCanvas.marginWidth = 0;
+        gl_previewCanvas.horizontalSpacing = 0;
+        previewCanvas.setLayout(gl_previewCanvas);
+
+        previewCanvas.addPaintListener(new PaintListener() {
+
+            @Override
+            public void paintControl(PaintEvent e) {
+                redraw(e);
+            }
+        });
+
         listViewer.setContentProvider(new ArrayContentProvider());
         listViewer.setLabelProvider(new ResultViewLabelProvider());
         listViewer.setInput(pathList);
-        pathSash.setWeights(new int[] { 1, 1 });
 
         Group grpResult = new Group(sashForm, SWT.NONE);
         grpResult.setText("Result");
@@ -196,25 +231,7 @@ public class PhotoSyncWindow extends ApplicationWindow {
                     p = m.getDuplicates().get(0).getFullPath();
                 }
                 if (!p.isEmpty()) {
-
-                    ImageLoader loader = new ImageLoader();
-                    loader.load(p);
-                    Image src = new Image(null, loader.data[0]);
-                    GC gc = new GC(previewComp);
-                    gc.setAdvanced(true);
-
-                    Rectangle previewBounds = previewComp.getBounds();
-                    Rectangle imageBounds = src.getBounds();
-
-                    double a = (double) (previewBounds.height / imageBounds.height);
-                    double b = (double) (previewBounds.width / imageBounds.width);
-
-                    double ratio = Math.min(a, b);
-
-                    // double ratio = (double) src.getBounds().height / (double) src.getBounds().width;
-
-                    gc.drawImage(src, 0, 0, imageBounds.width, imageBounds.height, 0, 0, (int) (imageBounds.width * ratio),
-                            (int) (imageBounds.height * ratio));
+                    drawPreview(p);
                 }
             }
         });
@@ -223,6 +240,35 @@ public class PhotoSyncWindow extends ApplicationWindow {
         return container;
     }
 
+    private void drawPreview(String path) {
+        if (null != path) {
+            ImageLoader loader = new ImageLoader();
+            loader.load(path);
+            previewImage = new Image(null, loader.data[0]);
+            previewCanvas.redraw();
+        }
+    }
+
+    private void redraw(PaintEvent e) {
+        if (previewImage != null) {
+
+            Rectangle previewBounds = previewCanvas.getBounds();
+
+            double a = (double) previewBounds.height / (double) previewImage.getBounds().height;
+            double b = (double) previewBounds.width / (double) previewImage.getBounds().width;
+            double ratio = Math.min(a, b);
+
+            int scaledWidth = (int) (previewImage.getBounds().width * ratio);
+            int scaledHeight = (int) (previewImage.getBounds().height * ratio);
+
+            int x = 0;
+            if (scaledWidth < previewBounds.width) {
+                x = (previewBounds.width - scaledWidth) / 2;
+            }
+            e.gc.drawImage(previewImage, 0, 0, previewImage.getBounds().width, previewImage.getBounds().height, x, 0,
+                    scaledWidth, scaledHeight);
+        }
+    }
     /**
      * Create the actions.
      */

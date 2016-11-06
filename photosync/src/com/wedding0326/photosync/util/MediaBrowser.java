@@ -8,8 +8,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.wedding0326.photosync.core.MediaModel;
+import javax.activation.MimetypesFileTypeMap;
 
+import com.wedding0326.photosync.core.MediaModel;
 
 /**
  * DOC yyi class global comment. Detailled comment <br/>
@@ -25,15 +26,21 @@ public class MediaBrowser {
         }
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
             paths.forEach(filePath -> {
+
                 if (Files.isRegularFile(filePath)) {
-                    MediaModel model = new MediaModel();
-                    File mediaFile = filePath.toFile();
-                    model.setName(mediaFile.getName());
-                    model.setFullPath(filePath.toString());
-                    model.setSize(mediaFile.length());
-                    mediaList.add(model);
+                    String mimetype = new MimetypesFileTypeMap().getContentType(filePath.toString());
+//                     System.out.println("------>" + mimetype);
+                    if (mimetype.startsWith("image/")) {
+                        MediaModel model = new MediaModel();
+                        File mediaFile = filePath.toFile();
+                        model.setName(mediaFile.getName());
+                        model.setFullPath(filePath.toString());
+                        model.setSize(mediaFile.length());
+                        mediaList.add(model);
+                    }
                 }
             });
         }
     }
+
 }

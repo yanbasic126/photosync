@@ -3,6 +3,7 @@ package com.wedding0326.photosync.main;
 import org.eclipse.swt.widgets.Display;
 
 import com.wedding0326.photosync.ui.PhotoSyncWindow;
+import com.wedding0326.photosync.util.TestUtils;
 
 /**
  * DOC yyi class global comment. Detailled comment <br/>
@@ -15,6 +16,7 @@ public class AppLauncher {
     public static void main(String[] args) {
 
         try {
+            TestUtils.openSleak();
             PhotoSyncWindow window = new PhotoSyncWindow();
             window.setBlockOnOpen(true);
             window.open();

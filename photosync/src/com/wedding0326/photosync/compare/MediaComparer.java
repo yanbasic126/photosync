@@ -11,6 +11,7 @@ import java.util.Set;
 import com.wedding0326.photosync.core.DuplicatesModel;
 import com.wedding0326.photosync.core.MediaModel;
 import com.wedding0326.photosync.util.MediaBrowser;
+import com.wedding0326.photosync.util.TestUtils;
 
 /**
  * DOC yyi class global comment. Detailled comment <br/>
@@ -38,20 +39,25 @@ public class MediaComparer {
     }
 
     public CompareResult doCompare() {
-        CompareResult result = null;
+        final CompareResult result = new CompareResult();
+
+        TestUtils.printTime("start");
         if (readMedias()) {
-
+            TestUtils.printTime("readMedias");
             Map<MediaModel, DuplicatesModel> duplicates = new HashMap<>();
-
-            mediaList.forEach(m -> {
-                if (duplicates.get(m) != null) {
-                    duplicates.get(m).addDuplicates(m);
-                } else {
-                    duplicates.put(m, new DuplicatesModel(m));
-                }
-            });
-            result = new CompareResult();
+            //
+            // mediaList.forEach(m -> {
+            // if (duplicates.get(m) != null) {
+            // duplicates.get(m).addDuplicates(m);
+            // } else {
+            // duplicates.put(m, new DuplicatesModel(m));
+            // }
+            // });
+            // result = new CompareResult();
+            // result.addResult(duplicates);
+            mediaList.forEach(m -> result.addIdentical(m));
             result.addResult(duplicates);
+             TestUtils.printTime("compare");
         } else {
             System.out.println("do compare fails");
         }

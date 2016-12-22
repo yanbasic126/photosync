@@ -6,11 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.internal.gdip.Gdip;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -21,6 +24,12 @@ import org.eclipse.swt.widgets.Shell;
 
 public class PhotoViewer extends Shell {
 
+    private Canvas previewCanvas;
+
+    private Image previewImage;
+
+    private String imagePath;
+
     /**
      * Create the shell.
      * 
@@ -28,54 +37,67 @@ public class PhotoViewer extends Shell {
      */
     public PhotoViewer(Display display, String imagePath) {
         super(display, SWT.SHELL_TRIM);
+        this.imagePath = imagePath;
         setLayout(new GridLayout(1, false));
 
-        Composite composite = new Composite(this, SWT.NONE);
-        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
-        composite.setLayout(new GridLayout(1, false));
+        Composite previewComp = new Composite(this, SWT.NONE);
+        previewComp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+        previewComp.setLayout(new GridLayout(1, false));
 
-        Canvas canvas = new Canvas(composite, SWT.NONE);
-        canvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+        previewCanvas = new Canvas(previewComp, SWT.NONE);
+        previewCanvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+        GridLayout gl_previewCanvas = new GridLayout(1, false);
+        gl_previewCanvas.marginHeight = 0;
+        gl_previewCanvas.verticalSpacing = 0;
+        gl_previewCanvas.marginWidth = 0;
+        gl_previewCanvas.horizontalSpacing = 0;
+        previewCanvas.setLayout(gl_previewCanvas);
 
-        Composite composite_1 = new Composite(composite, SWT.NONE);
-        composite_1.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-        composite_1.setBounds(0, 0, 64, 64);
+        previewCanvas.addPaintListener(new PaintListener() {
 
-        Button btnNewButton = new Button(composite_1, SWT.NONE);
-        btnNewButton.setBounds(0, 0, 75, 25);
-        btnNewButton.setText("New Button");
+            @Override
+            public void paintControl(PaintEvent e) {
+                redraw(e);
+            }
+        });
+
+        Composite buttonsComp = new Composite(previewComp, SWT.NONE);
+        buttonsComp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+        buttonsComp.setBounds(0, 0, 64, 64);
+
+        Button rotateButton1 = new Button(buttonsComp, SWT.NONE);
+        rotateButton1.setBounds(0, 0, 75, 25);
+        rotateButton1.setText("Rotate Counterclockwise");
+        
+        rotateButton1.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                // TODO Auto-generated method stub
+//                rotate();
+                super.widgetSelected(e);
+            }
+        });
+        
+        Button rotateButton2 = new Button(buttonsComp, SWT.NONE);
+        rotateButton2.setBounds(0, 0, 75, 25);
+        rotateButton2.setText("Rotate clockwise");
         createContents();
 
-        ByteArrayInputStream inputByteStream;
-        try {
-            inputByteStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(imagePath)));
-            ImageLoader loader = new ImageLoader();
-            Image src = new Image(display, loader.load(inputByteStream)[0]);
-            canvas.setBackgroundImage(scaleToPreview(src, canvas.getBounds().width, canvas.getBounds().height));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+        Display.getDefault().asyncExec(new Runnable() {
 
-    private Image scaleToPreview(Image image, int scaledWidth, int scaledHeigth) {
-        Image scaled = new Image(Display.getDefault(), scaledWidth, scaledHeigth);
-        GC gc = new GC(scaled, Gdip.SmoothingModeNone);
-        // gc.setAntialias(SWT.ON);//smooth
-        // gc.setInterpolation(SWT.LOW);
+            @Override
+            public void run() {
+                try {
+                    ByteArrayInputStream inputByteStream = new ByteArrayInputStream(Files.readAllBytes(Paths.get(imagePath)));
+                    ImageLoader loader = new ImageLoader();
+                    previewImage = new Image(display, loader.load(inputByteStream)[0]);
+                    previewCanvas.redraw();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
-        Rectangle rectangle = image.getBounds();
-        int width = rectangle.width;
-        int height = rectangle.height;
-        int size = (width <= height) ? width : height;
-        int x = (width > height) ? (width - height) / 2 : 0;
-        int y = (height > width) ? (height - width) / 2 : 0;
-        gc.drawImage(image, x, y, size, size, 0, 0, scaledWidth, scaledHeigth);
-
-        rectangle = null;
-        gc.dispose();
-        gc = null;
-        return scaled;
     }
 
     /**
@@ -90,5 +112,87 @@ public class PhotoViewer extends Shell {
     @Override
     protected void checkSubclass() {
         // Disable the check that prevents subclassing of SWT components
+    }
+
+    private void redraw(PaintEvent e) {
+        if (previewImage != null) {
+
+            Rectangle previewBounds = previewCanvas.getBounds();
+            Rectangle imageBounds = previewImage.getBounds();
+            double a = (double) previewBounds.height / (double) imageBounds.height;
+            double b = (double) previewBounds.width / (double) imageBounds.width;
+            double ratio = Math.min(a, b);
+
+            int scaledWidth = (int) (imageBounds.width * ratio);
+            int scaledHeight = (int) (imageBounds.height * ratio);
+
+            int x = 0;
+            if (scaledWidth < previewBounds.width) {
+                x = (previewBounds.width - scaledWidth) / 2;
+            }
+            e.gc.drawImage(previewImage, 0, 0, imageBounds.width, imageBounds.height, x, 0, scaledWidth, scaledHeight);
+        }
+    }
+
+    static ImageData rotate(ImageData srcData, int direction) {
+        int bytesPerPixel = srcData.bytesPerLine / srcData.width;
+        int destBytesPerLine = (direction == SWT.DOWN) ? srcData.width * bytesPerPixel : srcData.height * bytesPerPixel;
+        byte[] newData = new byte[srcData.data.length];
+        int width = 0, height = 0;
+        for (int srcY = 0; srcY < srcData.height; srcY++) {
+            for (int srcX = 0; srcX < srcData.width; srcX++) {
+                int destX = 0, destY = 0, destIndex = 0, srcIndex = 0;
+                switch (direction) {
+                case SWT.LEFT: // left 90 degrees
+                    destX = srcY;
+                    destY = srcData.width - srcX - 1;
+                    width = srcData.height;
+                    height = srcData.width;
+                    break;
+                case SWT.RIGHT: // right 90 degrees
+                    destX = srcData.height - srcY - 1;
+                    destY = srcX;
+                    width = srcData.height;
+                    height = srcData.width;
+                    break;
+                case SWT.DOWN: // 180 degrees
+                    destX = srcData.width - srcX - 1;
+                    destY = srcData.height - srcY - 1;
+                    width = srcData.width;
+                    height = srcData.height;
+                    break;
+                }
+                destIndex = (destY * destBytesPerLine) + (destX * bytesPerPixel);
+                srcIndex = (srcY * srcData.bytesPerLine) + (srcX * bytesPerPixel);
+                System.arraycopy(srcData.data, srcIndex, newData, destIndex, bytesPerPixel);
+            }
+        }
+        // destBytesPerLine is used as scanlinePad to ensure that no padding is
+        // required
+        return new ImageData(width, height, srcData.depth, srcData.palette, destBytesPerLine, newData);
+    }
+
+    static ImageData flip(ImageData srcData, boolean vertical) {
+        int bytesPerPixel = srcData.bytesPerLine / srcData.width;
+        int destBytesPerLine = srcData.width * bytesPerPixel;
+        byte[] newData = new byte[srcData.data.length];
+        for (int srcY = 0; srcY < srcData.height; srcY++) {
+            for (int srcX = 0; srcX < srcData.width; srcX++) {
+                int destX = 0, destY = 0, destIndex = 0, srcIndex = 0;
+                if (vertical) {
+                    destX = srcX;
+                    destY = srcData.height - srcY - 1;
+                } else {
+                    destX = srcData.width - srcX - 1;
+                    destY = srcY;
+                }
+                destIndex = (destY * destBytesPerLine) + (destX * bytesPerPixel);
+                srcIndex = (srcY * srcData.bytesPerLine) + (srcX * bytesPerPixel);
+                System.arraycopy(srcData.data, srcIndex, newData, destIndex, bytesPerPixel);
+            }
+        }
+        // destBytesPerLine is used as scanlinePad to ensure that no padding is
+        // required
+        return new ImageData(srcData.width, srcData.height, srcData.depth, srcData.palette, destBytesPerLine, newData);
     }
 }

@@ -18,7 +18,6 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageLoader;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.gdip.Gdip;
 import org.eclipse.swt.layout.GridData;
@@ -178,7 +177,7 @@ public class PhotoExplorer {
 
         @Override
         public void run() {
-            Image src;
+            Image src = null;
             Image preview;
             ByteArrayInputStream inputByteStream;
             ByteArrayInputStream thumbByteStream;
@@ -200,8 +199,12 @@ public class PhotoExplorer {
                         if (extention.endsWith(JPG_LOWERCASE) || extention.endsWith(JEPG_LOWERCASE)) {
                             thumbDirectory = JpegMetadataReader.readMetadata(inputByteStream).getFirstDirectoryOfType(
                                     ExifThumbnailDirectory.class);
-                            thumbByteStream = new ByteArrayInputStream(thumbDirectory.getThumbnailData());
-                            src = new Image(display, loader.load(thumbByteStream)[0]);
+                            if (thumbDirectory != null) {
+                            	thumbByteStream = new ByteArrayInputStream(thumbDirectory.getThumbnailData());
+                            	src = new Image(display, loader.load(thumbByteStream)[0]);
+                            }else{
+                            	
+                            }
                         } else {
                             src = new Image(display, loader.load(inputByteStream)[0]);
                         }

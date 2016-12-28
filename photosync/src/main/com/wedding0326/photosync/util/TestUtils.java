@@ -11,17 +11,17 @@ import org.eclipse.swt.widgets.Display;
 public class TestUtils {
 
     public static Date LAST_TIME = new Date();
-    
+
     public static boolean IS_DEBUG = true;
 
     public static void printTime(String name) {
         if (IS_DEBUG) {
-            
+
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss SSS");
             long last = LAST_TIME.getTime();
             LAST_TIME = new Date();
             long duration = LAST_TIME.getTime() - last;
-            String threadName = Thread.currentThread().getName(); 
+            String threadName = Thread.currentThread().getName();
             System.out.println("[" + dateFormat.format(LAST_TIME) + "]: " + threadName + "    " + name + " duration:" + duration);
         }
     }

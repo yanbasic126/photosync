@@ -21,23 +21,23 @@ public class PhotoSyncLauncher {
 
     public static void main(String[] args) {
 
-//        File swtjar = new File("lib/org.eclipse.swt.win32.win32.x86_64_3.103.1.v20140903-1947.jar");
-//        if (swtjar.exists()) {
-//            Class[] parameters = { URL.class };
-//            URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-//            Class<URLClassLoader> sysclass = URLClassLoader.class;
-//            try {
-//                Method method = sysclass.getDeclaredMethod("addURL", parameters);
-//                method.setAccessible(true);
-//
-//                method.invoke(sysloader, new Object[] { swtjar.toURL() });
-//            } catch (Throwable t) {
-//                t.printStackTrace();
-//            }
-//        }
+         File swtjar = new File("org.eclipse.swt.win32.win32.x86_64_3.103.1.v20140903-1947.jar");
+         if (swtjar.exists()) {
+         Class[] parameters = { URL.class };
+         URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+         Class<URLClassLoader> sysclass = URLClassLoader.class;
+         try {
+         Method method = sysclass.getDeclaredMethod("addURL", parameters);
+         method.setAccessible(true);
+        
+         method.invoke(sysloader, new Object[] { swtjar.toURL() });
+         } catch (Throwable t) {
+         t.printStackTrace();
+         }
+         }
         try {
             // FileViewer.main(null);
-//            TestUtils.openSleak();
+            // TestUtils.openSleak();
             PhotoSyncWindow window = new PhotoSyncWindow();
             window.setBlockOnOpen(true);
             window.open();

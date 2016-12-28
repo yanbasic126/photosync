@@ -200,10 +200,10 @@ public class PhotoExplorer {
                             thumbDirectory = JpegMetadataReader.readMetadata(inputByteStream).getFirstDirectoryOfType(
                                     ExifThumbnailDirectory.class);
                             if (thumbDirectory != null) {
-                            	thumbByteStream = new ByteArrayInputStream(thumbDirectory.getThumbnailData());
-                            	src = new Image(display, loader.load(thumbByteStream)[0]);
-                            }else{
-                            	
+                                thumbByteStream = new ByteArrayInputStream(thumbDirectory.getThumbnailData());
+                                src = new Image(display, loader.load(thumbByteStream)[0]);
+                            } else {
+
                             }
                         } else {
                             src = new Image(display, loader.load(inputByteStream)[0]);

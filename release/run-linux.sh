@@ -1,1 +1,0 @@
-javaw -jar photosync.jar

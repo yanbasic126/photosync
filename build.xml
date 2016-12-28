@@ -108,4 +108,6 @@
 			<classpath refid="photosync.classpath" />
 		</java>
 	</target>
+	<target name="test" depends="build">
+	</target>
 </project>

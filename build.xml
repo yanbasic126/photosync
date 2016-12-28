@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="jar" name="photosync">
+<project basedir="." default="build" name="photosync">
 	<property environment="env" />
 	<property name="debuglevel" value="source,lines,vars" />
 	<property name="target" value="1.8" />
@@ -30,13 +30,11 @@
 	</target>
 	<target name="clean">
 		<delete dir="./build/" />
-		<delete dir="./release/photosync.jar" />
+		<delete dir="./release/" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="build-subprojects,build-project" name="build" />
-	<target name="build-subprojects" />
+	<target depends="clean,build-project" name="build" />
 	<target depends="init" name="build-project">
-		<echo message="${ant.project.name}: ${ant.file}" />
 		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" includeantruntime="false" source="${source}" target="${target}">
 			<src path="src/main" />
 			<src path="src/test" />
@@ -45,10 +43,6 @@
 	</target>
 	<target name="jar" depends="build">
 		<mkdir dir="release" />
-		<copy includeemptydirs="false" todir="release">
-			<fileset dir="./launch/" />
-		</copy>
-		<!--Create a temporary jar file with all the dependencies (i.e. the libs folder)-->
 		<jar jarfile="./release/temp.jar">
 			<zipgroupfileset dir="./lib/">
 				<exclude name="swt*.jar" />
@@ -57,60 +51,18 @@
 				<include name="**/*.jar" />
 			</zipgroupfileset>
 		</jar>
-
 		<!-- Package cross platform SWT Jar -->
 		<swtjar jarfile="./release/photosync.jar" targetmainclass="com.wedding0326.photosync.main.PhotoSyncLauncher" swtversion="3.103.1">
-			<!-- Application Classes -->
 			<fileset dir="./build/classes" includes="**/*.class" />
-
-			<!-- Library Classes -->
 			<zipfileset excludes="META-INF/*.SF" src="./release/temp.jar" />
-
-			<!-- SWT Jars -->
 			<fileset dir="./lib" includes="swt-*.jar" />
 		</swtjar>
-
+		<delete file="./release/ptohosync.zip" />
 		<delete file="./release/temp.jar" />
-		<zip destfile="./release/ptohosync.zip" basedir="./release" update="true" />
-		<delete file="./release/run-linux.sh" />
-		<delete file="./release/run-windows.bat" />
+		<zip destfile="./release/ptohosync.zip" basedir="./release" update="true">
+			<fileset dir="./launch/" />
+		</zip>
 		<delete file="./release/photosync.jar" />
-	</target>
-	<target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects" />
-	<target name="photosync">
-		<java classname="com.wedding0326.photosync.main.PhotoSyncLauncher" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="PhotoSyncWindow">
-		<java classname="com.wedding0326.photosync.ui.PhotoSyncWindow" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="SnippetVirtual">
-		<java classname="com.wedding0326.photosync.test.SnippetVirtual" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="FileBrowser">
-		<java classname="com.wedding0326.photosync.ui.fileBrowser.FileBrowser" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="FileBrowserJFace_slow">
-		<java classname="com.wedding0326.photosync.ui.fileBrowser.FileBrowserJFace_slow" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="MTPUtil">
-		<java classname="com.wedding0326.photosync.test.MTPUtil" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
-	</target>
-	<target name="PhotoViewer">
-		<java classname="com.wedding0326.photosync.ui.photoViewer.PhotoViewer" failonerror="true" fork="yes">
-			<classpath refid="photosync.classpath" />
-		</java>
 	</target>
 	<target name="test" depends="build">
 	</target>

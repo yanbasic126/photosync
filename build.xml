@@ -71,6 +71,10 @@
 		</swtjar>
 
 		<delete file="./release/temp.jar" />
+		<zip destfile="./release/ptohosync.zip" basedir="./release" update="true" />
+		<delete file="./release/run-linux.sh" />
+		<delete file="./release/run-windows.bat" />
+		<delete file="./release/photosync.jar" />
 	</target>
 	<target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects" />
 	<target name="photosync">
